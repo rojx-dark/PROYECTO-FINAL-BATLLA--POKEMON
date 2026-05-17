@@ -1,0 +1,18 @@
+{
+  "sobres": [
+    {
+      "tipo": "basico",
+      "precio": 100,
+      "prob_comun": 70,
+      "prob_raro": 25,
+      "prob_epico": 5
+    },
+    {
+      "tipo": "avanzado",
+      "precio": 250,
+      "prob_comun": 40,
+      "prob_raro": 45,
+      "prob_epico": 15
+    }
+  ]
+}

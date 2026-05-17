@@ -1,0 +1,17 @@
+[
+  { "nombre": "charmander",  "tipos": ["Fuego"],             "ataque_base": 52, "defensa_base": 43, "velocidad_base": 65 },
+  { "nombre": "squirtle",    "tipos": ["Agua"],              "ataque_base": 48, "defensa_base": 65, "velocidad_base": 43 },
+  { "nombre": "bulbasaur",   "tipos": ["Planta"],            "ataque_base": 49, "defensa_base": 49, "velocidad_base": 45 },
+  { "nombre": "pikachu",     "tipos": ["Electrico"],         "ataque_base": 55, "defensa_base": 40, "velocidad_base": 90 },
+  { "nombre": "geodude",     "tipos": ["Roca", "Tierra"],    "ataque_base": 80, "defensa_base": 100,"velocidad_base": 20 },
+  { "nombre": "pidgey",      "tipos": ["Normal", "Volador"], "ataque_base": 45, "defensa_base": 40, "velocidad_base": 56 },
+  { "nombre": "vulpix",      "tipos": ["Fuego"],             "ataque_base": 41, "defensa_base": 40, "velocidad_base": 65 },
+  { "nombre": "psyduck",     "tipos": ["Agua"],              "ataque_base": 52, "defensa_base": 48, "velocidad_base": 55 },
+  { "nombre": "oddish",      "tipos": ["Planta"],            "ataque_base": 50, "defensa_base": 55, "velocidad_base": 30 },
+  { "nombre": "magnemite",   "tipos": ["Electrico"],         "ataque_base": 35, "defensa_base": 70, "velocidad_base": 45 },
+  { "nombre": "onix",        "tipos": ["Roca", "Tierra"],    "ataque_base": 45, "defensa_base": 160,"velocidad_base": 70 },
+  { "nombre": "gastly",      "tipos": ["Normal"],            "ataque_base": 35, "defensa_base": 30, "velocidad_base": 80 },
+  { "nombre": "seel",        "tipos": ["Agua"],              "ataque_base": 45, "defensa_base": 55, "velocidad_base": 45 },
+  { "nombre": "growlithe",   "tipos": ["Fuego"],             "ataque_base": 70, "defensa_base": 45, "velocidad_base": 60 },
+  { "nombre": "venomoth",    "tipos": ["Bicho"],             "ataque_base": 65, "defensa_base": 60, "velocidad_base": 90 }
+]

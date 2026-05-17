@@ -1,0 +1,466 @@
+"Proyecto Final - Batallas Pokémon
+1. Objetivo del Proyecto
+Implementar una plataforma de batallas Pokémon por turnos en interfaz por consola con:
+
+Concurrencia (múltiples batallas simultáneas),
+Distribución (batallas ejecutándose en al menos 2 nodos),
+Persistencia en archivos,
+Sistema de progresión por sobres (colección + economía).
+2. Alcance Obligatorio
+El proyecto debe incluir obligatoriamente:
+
+Registro e inicio de sesión de entrenadores.
+Salas de batalla 1v1.
+Motor de combate por turnos con cálculo de daño.
+Efectividad de tipos (fuerte/débil/neutro).
+Estadísticas del Pokémon calculadas a partir de su rareza.
+Sobres aleatorios para obtener Pokémon con movimientos asignados aleatoriamente.
+Monedas por victoria para comprar sobres.
+Intercambio de Pokémon entre entrenadores.
+Múltiples batallas concurrentes.
+Ejecución distribuida en al menos 2 nodos Elixir.
+Persistencia de entrenadores, inventario y resultados.
+Gestión de equipos predefinidos reutilizables por entrenador.
+3. Modelo de Datos
+3.0 Especie base vs. instancia de Pokémon
+En el sistema existen dos conceptos distintos:
+
+Especie base (pokemon.json): es la plantilla de una especie. Define atributos fijos que no cambian: tipos y estadísticas base. Todos los Charmander del juego comparten la misma especie base. El catálogo de especies se carga desde este archivo, por lo que se pueden agregar nuevas especies simplemente editando el archivo, sin cambiar código.
+Instancia de Pokémon: es el Pokémon concreto que un entrenador posee. Se crea a partir de la especie base cuando se abre un sobre, pero tiene atributos propios: rareza, movimientos asignados aleatoriamente, dueño_original e id. Dos instancias de la misma especie pueden tener movimientos y estadísticas de combate distintas según su rareza.
+La instancia no duplica los campos de la especie base (tipos, estadísticas base). Los consulta en pokemon.json cuando los necesita (cálculo de daño, asignación de movimientos, visualización).
+
+3.1 Pokémon (atributos de la instancia)
+id (número entero aleatorio asignado al crear la instancia; identifica de forma única a ese Pokémon en el inventario)
+especie (identificador de la especie, ej: charmander)
+dueño_original (nombre del entrenador que obtuvo el Pokémon del sobre)
+rareza (valores: comun, raro, epico; sorteada al abrir el sobre)
+salud_maxima (constante: 100 para todos; no se persiste)
+ataque, defensa, velocidad (calculados a partir de las estadísticas base y factor_rareza; ver sección 3.2)
+movimientos: lista de exactamente 4 movimientos asignados aleatoriamente al obtener el Pokémon de un sobre (ver sección 5); cada uno tiene nombre, tipo y poder.
+Campos persistentes por especie en pokemon.json (consultados por especie, no almacenados en la instancia):
+
+tipos (1 o 2 tipos; se consulta al calcular daño y al asignar movimientos)
+ataque_base
+defensa_base
+velocidad_base
+3.2 Estadísticas según rareza
+Las estadísticas de cada instancia se calculan aplicando un porcentaje aleatorio sobre las estadísticas base de la especie. El porcentaje (factor_rareza) se sortea una sola vez al crear la instancia y aplica igual a todas sus estadísticas, dentro del rango definido por la rareza:
+
+Rareza	Rango de factor_rareza
+común	2 % – 8 %
+raro	10 % – 20 %
+épico	25 % – 40 %
+El factor_rareza solo aplica a ataque, defensa y velocidad:
+
+ataque       = round(ataque_base    * (1 + factor_rareza / 100))
+defensa      = round(defensa_base   * (1 + factor_rareza / 100))
+velocidad    = round(velocidad_base * (1 + factor_rareza / 100))
+Las estadísticas resultantes se almacenan directamente en la instancia. No es necesario persistir factor_rareza por separado, ya que los valores calculados son suficientes para el funcionamiento del sistema.
+
+Ejemplo para un Charmander (ataque_base=52, defensa_base=43, velocidad_base=65):
+
+Rareza	factor_rareza (ejemplo)	Ataque	Defensa	Velocidad
+común	2 %	53	44	66
+común	8 %	56	46	70
+raro	10 %	57	47	72
+raro	20 %	62	52	78
+épico	25 %	65	54	81
+épico	40 %	73	60	91
+Dos instancias de la misma especie y rareza pueden tener estadísticas distintas, lo que hace que cada Pokémon sea único y agrega valor estratégico al intercambio.
+
+3.3 Tipos (tabla mínima requerida)
+El tipo del movimiento determina el modificador de efectividad según el tipo del Pokémon defensor. Esta tabla cubre solo efectividad; el tipo del atacante interviene en STAB, definido en la sección 7.6.
+
+Relaciones mínimas (el símbolo > significa “es fuerte contra”, modificador x2.0):
+
+Fuego > Planta, Hielo, Bicho
+Agua > Fuego, Roca, Tierra
+Planta > Agua, Roca, Tierra
+Eléctrico > Agua, Volador
+Roca > Fuego, Hielo, Volador, Bicho
+La debilidad es la inversa: si el tipo A es fuerte contra el tipo B (x2.0), entonces un movimiento de tipo B contra un defensor de tipo A aplica x0.5.
+
+Reglas:
+
+Si no hay relación definida en ninguna dirección, el daño es neutro (x1.0).
+Si el defensor tiene 2 tipos, se multiplican ambos modificadores entre sí (por ejemplo, x2.0 * x0.5 = x1.0).
+El tipo del defensor se consulta en pokemon.json por especie.
+4. Cuenta, Economía y Colección
+El proyecto debe incluir un sistema de cuenta para entrenadores, con monedas como recurso para comprar sobres que contienen Pokémon con movimientos aleatorios. El progreso del entrenador (monedas, inventario, movimientos asignados) debe persistir entre ejecuciones del programa.
+
+4.1 Registro y sesión
+iniciar <usuario> <clave>: inicia sesión; si no existe, registra automáticamente.
+salir: cierra sesión.
+Al crear cuenta, el entrenador recibe 1 sobre básico gratis.
+4.2 Perfil, inventario y clasificación
+perfil: muestra monedas, sobres pendientes y cantidad de Pokémon en inventario.
+inventario: lista todos los Pokémon del entrenador con sus atributos completos. Es el comando principal para consultar id antes de crear equipos o intercambiar.
+listar_equipos: lista los equipos guardados del entrenador con sus Pokémon (ver sección 7.1).
+clasificacion: muestra clasificación global ordenada por número de victorias (mayor a menor). En caso de empate, desempata por monedas acumuladas históricamente (no el saldo actual).
+Formato sugerido para perfil:
+
+=== Perfil de Carlos ===
+Monedas: 230
+Sobres pendientes: 0
+Pokémon en inventario: 3
+Formato sugerido para inventario:
+
+=== Inventario de Carlos (3 Pokémon) ===
+  1. [#48291] Charmander (Fuego) [común]
+     Ataque: 53 | Defensa: 44 | Velocidad: 66 | Salud máx: 100
+     Dueño original: Carlos
+     Movimientos: ascuas(30), nitrocarga(30), placaje(35), picadura(32)
+
+  2. [#71834] Pikachu (Eléctrico) [raro]
+     Ataque: 63 | Defensa: 46 | Velocidad: 104 | Salud máx: 100
+     Dueño original: Carlos
+     Movimientos: impactrueno(65), chispa(50), ataque_rapido(40), ráfaga(60)
+
+  3. [#29047] Geodude (Roca/Tierra) [común]
+     Ataque: 45 | Defensa: 57 | Velocidad: 41 | Salud máx: 100
+     Dueño original: Ana
+     Movimientos: lanzarrocas(35), tumba_rocas(28), terremoto(40), placaje(35)
+Formato sugerido para clasificacion:
+
+=== Clasificación Global ===
+#    Entrenador   Victorias   Monedas acumuladas
+1    Ana              12           3.450
+2    Luis              9           2.100
+3    Carlos            7           1.800
+4.3 Tienda y sobres
+tienda: lista tipos de sobre, precio y probabilidades.
+comprar_sobre <tipo>: compra un sobre descontando monedas.
+abrir_sobre <id_sobre|ultimo>: abre un sobre, sortea especie y rareza, asigna movimientos a cada Pokémon y lo agrega al inventario.
+Reglas de sobres:
+
+Un sobre contiene siempre 3 Pokémon.
+La especie de cada Pokémon se elige aleatoriamente del catálogo completo en pokemon.json.
+La rareza se sortea individualmente para cada Pokémon según la tabla de probabilidades del tipo de sobre (cada Pokémon del mismo sobre puede tener rareza distinta).
+Probabilidades por tipo de sobre:
+Tipo de sobre	Precio	Común	Raro	Épico
+básico	100	70%	25%	5%
+avanzado	250	40%	45%	15%
+Al abrir un sobre, cada Pokémon recibe 4 movimientos aleatorios según las reglas de la sección 5.
+Pueden salir Pokémon repetidos; cada uno tendrá movimientos distintos, lo que incentiva la colección.
+El dueño_original de cada Pokémon obtenido es el entrenador que abrió el sobre.
+Cada instancia recibe un id numérico aleatorio único al momento de crearse.
+Cada sobre comprado recibe un id numérico único al momento de la compra. Este id es el que se usa en abrir_sobre <id_sobre>. El alias ultimo abre el sobre adquirido más recientemente.
+Formato sugerido para abrir_sobre:
+
+¡Sobre abierto! Obtuviste:
+
+  1. [#48291] Charmander (Fuego) [común] - Dueño original: Carlos
+     Movimientos: ascuas (30), nitrocarga (30), placaje (35), picadura (32)
+
+  2. [#71834] Pikachu (Eléctrico) [raro] - Dueño original: Carlos
+     Movimientos: impactrueno (65), chispa (50), ataque_rapido (40), ráfaga (60)
+
+  3. [#29047] Geodude (Roca/Tierra) [común] - Dueño original: Carlos
+     Movimientos: lanzarrocas (35), tumba_rocas (28), terremoto (40), placaje (35)
+4.4 Recompensas por batalla
+Ganador: +100 monedas.
+Perdedor: +30 monedas (participación).
+Las monedas recibidas se suman también al acumulado histórico del entrenador (usado en clasificación).
+5. Movimientos: Pool y Asignación Aleatoria
+5.1 Pool global de movimientos por tipo
+El sistema mantiene un pool de movimientos organizados por tipo elemental, cargado desde data/moves.json. Cada tipo tiene al menos 6 movimientos disponibles. Al ser cargados desde el archivo, se pueden agregar nuevos movimientos simplemente editando moves.json, sin necesidad de cambiar código. Lo mismo aplica para las especies base en pokemon.json.
+
+Tipo	Movimientos disponibles (pool)
+Fuego	ascuas, llamarada, giro_fuego, lanzallamas, colmillo_igneo, nitrocarga
+Agua	pistola_agua, hidrobomba, acua_jet, surf, rayo_burbuja, cascada
+Planta	latigo_cepa, hoja_afilada, rayo_solar, drenadoras, bomba_germen, energia_bola
+Eléctrico	impactrueno, rayo, chispa, onda_trueno, voltio_cruel, electrobola
+Roca	lanzarrocas, avalancha, roca_afilada, tumba_rocas, poder_pasado, pedrada
+Volador	ráfaga, ataque_ala, aire_afilado, vuelo, picotazo, acróbata
+Hielo	rayo_hielo, ventisca, colmillo_hielo, canto_helado, polvo_hielo, avalancha_hielo
+Bicho	picadura, tijera_x, zumbido, megacuerno, pin_misil, acoso
+Tierra	terremoto, excavar, tierra_viva, lanza_mugre, hueso_palo, fuerza_telur
+Normal	ataque_rapido, placaje, golpe_cabeza, rapidez, corte, destructor
+Cada movimiento en moves.json tiene:
+
+nombre: identificador único (ej: ascuas).
+tipo: tipo elemental al que pertenece (ej: Fuego).
+poder_base: valor numérico fijo del movimiento, independiente del Pokémon que lo use. Su impacto real en batalla depende de las estadísticas del atacante y del defensor (ver sección 7.6).
+5.2 Reglas de asignación
+Al obtener un Pokémon de un sobre, el sistema le asigna exactamente 4 movimientos:
+
+Regla 1 – Movimientos de su(s) tipo(s): Al menos 2 de los 4 movimientos deben pertenecer al tipo (o tipos) de la especie. Si tiene dos tipos, al menos 1 de cada tipo.
+Regla 2 – Movimientos complementarios: Los restantes se eligen de cualquier tipo del pool global.
+Regla 3 – Sin repetición: No puede tener dos veces el mismo movimiento.
+5.3 Movimientos permanentes
+Una vez asignados al salir del sobre, los 4 movimientos son permanentes. No existe mecánica para reemplazar o intercambiar movimientos. Esto implica que dos Pokémon de la misma especie obtenidos en sobres distintos pueden tener movimientos completamente diferentes.
+
+5.4 Ejemplo de asignación
+Un Charmander (especie tipo Fuego, rareza común) sale de un sobre básico:
+
+1. Se consulta el tipo de Charmander en pokemon.json: Fuego
+2. Se eligen 2 movimientos del pool de Fuego:
+     ascuas     (poder_base=30)
+     nitrocarga (poder_base=30)
+3. Se eligen 2 movimientos de cualquier tipo:
+     placaje    (Normal, poder_base=35)
+     picadura   (Bicho,  poder_base=32)
+4. Resultado: [ascuas(30), nitrocarga(30), placaje(35), picadura(32)]
+6. Intercambio de Pokémon
+Los intercambios ocurren únicamente en salas de intercambio y en tiempo real: ambos entrenadores deben estar conectados simultáneamente. Cada sala de intercambio vive en un proceso GenServer independiente y es gestionada por un DynamicSupervisor, igual que las batallas. No existen ofertas pendientes ni estados intermedios persistidos; si cualquiera de los dos se desconecta en cualquier punto del proceso, la sala y el intercambio se cancelan automáticamente.
+
+6.1 Flujo de un intercambio
+Crear sala: el entrenador A ejecuta crear_sala_intercambio. El sistema genera un código único (ej. IC-001) y lo muestra en la consola de A. A comparte ese código con B por cualquier medio.
+Unirse: B ejecuta unirse_sala_intercambio IC-001. Si la sala existe y aún no tiene dos participantes, B ingresa y ambas consolas lo confirman.
+Ofertas: dentro de la sala, cada entrenador ejecuta ofrecer_pokemon <id_pokemon> para proponer el Pokémon que entrega. Cada uno puede ver en su consola qué ha ofrecido el otro en tiempo real.
+Confirmación: una vez que ambos han ofrecido un Pokémon, cada uno ejecuta confirmar_intercambio. Cuando los dos confirman, los Pokémon cambian de inventario de inmediato y la sala se cierra.
+Cancelación: cualquiera puede ejecutar cancelar_intercambio en cualquier momento; esto cierra la sala para ambos sin realizar el intercambio.
+6.2 Comandos de intercambio
+crear_sala_intercambio: crea una sala de intercambio y muestra el código generado. Solo puede haber una sala activa por entrenador a la vez.
+unirse_sala_intercambio <codigo>: ingresa a la sala con ese código. Falla si el código no existe o ya tiene dos participantes.
+ofrecer_pokemon <id_pokemon>: dentro de la sala, propone el Pokémon que se entrega. Se puede cambiar la oferta antes de confirmar ejecutando el comando de nuevo con otro id.
+confirmar_intercambio: confirma la oferta actual. El intercambio solo se ejecuta cuando ambos han confirmado.
+cancelar_intercambio: cancela y cierra la sala para ambos participantes.
+Ejemplo de interacción en consola:
+
+# Ana crea la sala:
+> crear_sala_intercambio
+[Sala IC-001 creada] Comparte este código con el otro entrenador.
+
+# Luis se une:
+> unirse_sala_intercambio IC-001
+[Sala IC-001] Luis se ha unido. Ya pueden intercambiar.
+
+# Ana y Luis ofrecen sus Pokémon (independientemente, en cualquier orden):
+> ofrecer_pokemon 48291
+[Sala IC-001] Ana ofrece [#48291] Charmander (Fuego, común, Dueño original: Ana)
+
+> ofrecer_pokemon 29047
+[Sala IC-001] Luis ofrece [#29047] Geodude (Roca/Tierra, común, Dueño original: Luis)
+
+# Cada consola muestra el estado actual de la sala:
+[Sala IC-001] Ana  → [#48291] Charmander ✓
+              Luis → [#29047] Geodude     ✓
+              Ambos han ofrecido. Confirma con: confirmar_intercambio
+
+# Ambos confirman:
+> confirmar_intercambio
+[Intercambio completado] Recibiste [#29047] Geodude. Luis recibió [#48291] Charmander.
+6.3 Reglas de intercambio
+Ambos entrenadores deben estar conectados durante todo el proceso. Cualquier desconexión cancela la sala y el intercambio.
+Solo se puede crear o unirse a una sala de intercambio si no se está en batalla activa.
+Solo se puede intercambiar Pokémon que estén en el inventario; no puede estar en un equipo cargado en sala de batalla.
+Al completarse, los Pokémon cambian de inventario conservando todos sus atributos (id, especie, rareza, estadísticas, movimientos, dueño_original).
+No se permiten intercambios consigo mismo (un entrenador no puede unirse a su propia sala).
+Las salas de intercambio no se persisten; solo existen en memoria durante la sesión.
+7. Combate
+7.1 Equipos predefinidos reutilizables
+Para conocer los id de tus Pokémon antes de crear un equipo, usa el comando inventario (sección 4.2), que muestra todos tus Pokémon con id, especie, rareza, estadísticas y movimientos.
+
+crear_equipo <nombre> <id1[,id2,id3]>: crea un equipo con entre 1 y 3 Pokémon del inventario, identificados por su id.
+listar_equipos: lista equipos guardados del entrenador.
+quitar_pokemon_equipo <nombre_equipo> <id_pokemon>: elimina un Pokémon del equipo. No se puede quitar si es el único que queda.
+agregar_pokemon_equipo <nombre_equipo> <id_pokemon>: agrega un Pokémon del inventario a un equipo que tenga menos de 3. No puede superar los 3 Pokémon.
+usar_equipo <nombre>: carga un equipo guardado para la siguiente batalla.
+Formato sugerido para listar_equipos:
+
+Equipos guardados:
+  rapido   [3/3]: [#71834] Pikachu, [#48291] Charmander, [#93012] Pidgey
+  tanque   [1/3]: [#29047] Geodude
+  ofensivo [2/3]: [#55621] Bulbasaur, [#40182] Squirtle
+Reglas:
+
+Cada entrenador puede guardar múltiples equipos con nombre único.
+Un equipo puede tener entre 1 y 3 Pokémon y puede usarse en batalla con cualquier cantidad dentro de ese rango.
+Si algún Pokémon del equipo ya no está en el inventario (por ejemplo, fue intercambiado), el sistema rechaza usar_equipo e indica cuál falta.
+Debe existir validación para evitar equipos duplicados con el mismo nombre.
+No se puede quitar un Pokémon de un equipo si ese equipo está actualmente cargado en una sala de batalla.
+7.2 Salas de batalla
+listar_salas: lista salas disponibles.
+crear_sala tiempo_turno=20: crea sala con tiempo de turno configurable.
+unirse_sala <id_sala>: se une a una sala existente.
+iniciar_batalla <id_sala>: inicia combate si hay 2 jugadores con equipo válido.
+7.3 Inicio y fin de batalla
+Una batalla inicia solo con 2 entrenadores y equipo válido.
+Cada entrenador selecciona su equipo mediante usar_equipo antes de iniciar.
+Gana quien debilite todos los Pokémon del equipo rival o por abandono.
+Cuando un Pokémon queda debilitado durante un turno, el sistema lo retira automáticamente. El entrenador debe elegir el siguiente Pokémon al inicio del turno siguiente; si no lo hace en el tiempo límite, se selecciona automáticamente el primero disponible.
+Si un jugador se desconecta, se espera 15 segundos; si no vuelve, pierde por abandono.
+7.4 Sistema de turnos simultáneos
+Al inicio de cada turno ambos jugadores reciben el prompt al mismo tiempo y envían su acción de forma independiente. El sistema espera a recibir la acción de los dos antes de resolver. Una vez recibidas ambas:
+
+El Pokémon con mayor velocidad ejecuta su acción primero.
+Si ese ataque debilita al Pokémon rival, el otro jugador no ejecuta su acción ese turno.
+En empate de velocidad: el orden se decide aleatoriamente.
+Reglas adicionales:
+
+Tiempo máximo por turno: configurable (por defecto 20s). Si vence el tiempo y un jugador no envió acción, su acción ese turno es pasar.
+Un cambio de Pokémon también es una acción de turno. En todos los casos, el Pokémon con mayor velocidad actúa primero.
+7.5 Visualización y acciones en turno
+Al inicio de cada turno, el sistema muestra automáticamente el estado del Pokémon activo y sus movimientos disponibles:
+
+═══ Turno 3 ═══
+Rival: Squirtle (Agua) | Salud: 28/100
+Equipo rival: Squirtle (activo) | Charmander (vivo) | Bulbasaur (debilitado)
+
+Tu Pokémon: [#71834] Pikachu (Eléctrico) | Dueño original: Ana | Salud: 74/100 | Vel: 104
+Tu equipo:  [#71834] Pikachu (activo) | [#29047] Geodude (vivo) | [#93012] Pidgey (vivo)
+Movimientos:
+  1. impactrueno   (Eléctrico, poder 65)
+  2. chispa        (Eléctrico, poder 50)
+  3. ataque_rapido (Normal,    poder 40)
+  4. ráfaga        (Volador,   poder 60)
+
+Acción > _
+Acciones disponibles:
+
+ataque <movimiento>: ejecuta un ataque. Solo es válido si el movimiento pertenece al Pokémon activo. Si no es válido, el sistema muestra un error y solicita nueva acción (no consume turno).
+cambiar <id_pokemon>: cambia Pokémon activo por otro no debilitado del equipo, usando su id.
+rendirse: rendición inmediata.
+7.6 Cálculo de daño
+En el cálculo intervienen dos tipos distintos: el tipo del atacante (para STAB) y el tipo del defensor (para efectividad).
+
+dano_base  = trunc((poder_movimiento * (ataque_atacante / defensa_defensor)) / 5 + 2)
+dano_final = trunc(dano_base * efectividad * stab * factor_aleatorio)
+efectividad — depende del tipo del movimiento vs. el tipo de la especie defensora:
+
+Situación	Modificador
+El tipo del movimiento es fuerte contra el tipo del defensor	x2.0
+El tipo del movimiento es débil contra el tipo del defensor	x0.5
+No hay relación definida	x1.0
+Si el defensor tiene 2 tipos, se multiplican ambos modificadores (ej. x2.0 × x0.5 = x1.0). Ver tabla de relaciones en sección 3.3.
+
+stab (Same Type Attack Bonus) — depende del tipo del movimiento vs. el tipo de la especie atacante:
+
+Situación	Modificador
+El tipo del movimiento coincide con algún tipo del atacante	x1.5
+No coincide	x1.0
+factor_aleatorio: valor entre 0.85 y 1.00, sorteado en cada ataque.
+
+Daño mínimo por ataque exitoso: 1.
+
+Estadísticas de los Pokémon en el ejemplo:
+
+Pikachu  — especie: Eléctrico | rareza: raro  | factor_rareza: 15%
+  ataque_base=55  → ataque    = round(55 × 1.15) = 63
+  defensa_base=40 → defensa   = round(40 × 1.15) = 46
+  velocidad_base=90→ velocidad = round(90 × 1.15) = 104
+  salud_maxima    = 100 (siempre)
+
+Squirtle — especie: Agua      | rareza: común | factor_rareza:  8%
+  ataque_base=48  → ataque    = round(48 × 1.08) = 52
+  defensa_base=65 → defensa   = round(65 × 1.08) = 70
+  velocidad_base=43→ velocidad = round(43 × 1.08) = 46
+  salud_maxima    = 100 (siempre)
+Ejemplo 1: Pikachu usa impactrueno (tipo Eléctrico, poder_base=65) contra Squirtle:
+
+stab        = 1.5  → impactrueno es Eléctrico, coincide con el tipo del atacante (Pikachu)
+efectividad = 2.0  → Eléctrico es fuerte contra Agua (tipo del defensor, Squirtle)
+
+dano_base  = trunc((65 * (63 / 70)) / 5 + 2)   = trunc(13.7)  = 13
+dano_final = trunc(13 * 2.0 * 1.5 * 0.95)       = trunc(37.05) = 37
+Ejemplo 2: Pikachu usa placaje (tipo Normal, poder_base=35) contra Squirtle:
+
+stab        = 1.0  → placaje es Normal, no coincide con el tipo del atacante (Eléctrico)
+efectividad = 1.0  → Normal no tiene relación definida con Agua
+
+dano_base  = trunc((35 * (63 / 70)) / 5 + 2)   = trunc(8.3)   = 8
+dano_final = trunc(8 * 1.0 * 1.0 * 0.92)        = trunc(7.36)  = 7
+La diferencia entre ambos casos (37 vs 7) ilustra el impacto combinado de STAB y efectividad de tipo.
+
+8. Concurrencia y Distribución
+Cada batalla debe vivir en un proceso GenServer independiente, gestionado por un DynamicSupervisor.
+Cada sala de intercambio también debe vivir en un proceso GenServer independiente, gestionado por el mismo DynamicSupervisor (o uno dedicado).
+El sistema debe ejecutar batallas en al menos 2 nodos conectados.
+Resultado esperado:
+
+Dos batallas distintas pueden correr al mismo tiempo sin interferencia.
+Una falla en una batalla o sala de intercambio no debe tumbar el servidor completo.
+9. Persistencia (Archivos)
+Formato permitido: JSON o CSV (usar uno de forma consistente).
+
+Archivos mínimos:
+
+Archivo	Contenido
+data/trainers.json	usuario, clave, victorias, monedas_actuales, monedas_acumuladas, inventario (id, especie, rareza, ataque, defensa, velocidad, movimientos, dueño_original), sobres pendientes, equipos guardados
+data/pokemon.json	especies, tipos, ataque_base, defensa_base, velocidad_base por especie (NO incluye salud_base ni movimientos fijos)
+data/moves.json	pool de movimientos por tipo: nombre, tipo, poder_base
+data/tienda.json	tipos de sobre, precios, probabilidades por rareza
+data/battles.log	fecha, jugadores, ganador, nodo, duración, resumen
+Requisito: inventario (incluyendo estadísticas calculadas, movimientos, rareza y dueño_original), monedas y victorias deben mantenerse entre ejecuciones del programa. Los intercambios no se persisten por ser exclusivamente en tiempo real.
+
+10. Arquitectura Recomendada
+proyecto_pokemon/
+|-- lib/
+|   |-- pokemon_battle/
+|   |   |-- servidor.ex            # interfaz y enrutamiento de comandos
+|   |   |-- gestor_entrenadores.ex # sesión, perfil, inventario, monedas, equipos
+|   |   |-- sistema_sobres.ex      # compra/apertura de sobres y asignación de movimientos
+|   |   |-- intercambio.ex         # GenServer de sala de intercambio (ofertas, confirmación, cancelación)
+|   |   |-- gestor_salas.ex        # creación/unión de salas
+|   |   |-- batalla.ex             # GenServer de batalla
+|   |   |-- supervisor_batallas.ex # DynamicSupervisor de batallas
+|   |   |-- motor_combate.ex       # daño, tipos, turnos, visualización de movimientos
+|   |   |-- persistencia.ex        # lectura/escritura de archivos
+|   |   |-- cluster.ex             # nodos y asignación distribuida
+|-- data/
+|   |-- trainers.json
+|   |-- pokemon.json
+|   |-- moves.json
+|   |-- tienda.json
+|   |-- battles.log
+|-- test/
+|-- mix.exs
+11. Pruebas Mínimas Requeridas
+Programar al menos 5 pruebas con ExUnit que cubran como mínimo:
+
+Cálculo de daño con tipo fuerte/débil/neutro.
+Validación de turnos por velocidad (Pokémon más rápido ataca primero).
+Asignación de monedas al terminar batalla (ganador y perdedor).
+Compra y apertura de sobres (especie aleatoria, rareza según probabilidades, movimientos asignados según las reglas de la sección 5, dueño_original correcto).
+Intercambio de Pokémon entre dos entrenadores a través de una sala de intercambio (verificar que el Pokémon cambia de inventario y conserva id, rareza y dueño_original).
+12. Criterios de Aceptación
+Se considera cumplido si:
+
+Se pueden conectar 2 usuarios y jugar una batalla completa 1v1.
+El sistema aplica daño, tipos y STAB según reglas definidas.
+Los jugadores ganan monedas y pueden comprar/abrir sobres con movimientos aleatorios y rareza sorteada correctamente.
+El inventario persiste al reiniciar la aplicación (ver sección 9).
+Dos entrenadores conectados simultáneamente pueden crear y unirse a una sala de intercambio, ofrecer Pokémon, confirmar y ver el resultado reflejado en sus inventarios.
+Se ejecutan dos batallas simultáneas correctamente.
+Se demuestra ejecución distribuida en al menos 2 nodos.
+Al inicio de cada turno se muestran automáticamente los movimientos del Pokémon activo.
+Las pruebas unitarias pasan.
+13. Flujo de Ejemplo
+13.1 Preparación
+Sesión: Ana y Luis inician sesión con iniciar ana 1234 e iniciar luis 1234. Ambos reciben 1 sobre básico gratis.
+Sobres: Cada uno ejecuta abrir_sobre ultimo. Supóngase que Ana obtiene: Pikachu #71834 (Eléctrico, raro), Charmander #48291 (Fuego, común) y Pidgey #93012 (Volador, común). Luis obtiene: Geodude #29047 (Roca/Tierra, común), Bulbasaur #55621 (Planta, raro) y Squirtle #40182 (Agua, común). A cada uno se le asignan 4 movimientos aleatorios según las reglas de la sección 5.
+Intercambio: Ambos están conectados. Ana ejecuta crear_sala_intercambio y obtiene el código IC-001. Ana comparte el código con Luis, quien ejecuta unirse_sala_intercambio IC-001. Dentro de la sala, Ana ejecuta ofrecer_pokemon 48291 y Luis ejecuta ofrecer_pokemon 29047. Ambos ven las ofertas en su consola y ejecutan confirmar_intercambio. El Geodude #29047 pasa al inventario de Ana con dueño_original: Luis; el Charmander #48291 pasa a Luis con dueño_original: Ana.
+Equipos: Ana crea crear_equipo rapido 71834,29047,93012. Luis crea crear_equipo tanque 48291,55621,40182.
+Sala: Ana ejecuta crear_sala tiempo_turno=20 → id_sala=S-1001. Luis ejecuta unirse_sala S-1001.
+Carga de equipo: Ana: usar_equipo rapido. Luis: usar_equipo tanque. Ambos equipos validados.
+Inicio: iniciar_batalla S-1001 → batalla creada en nodo arena@host2, turno 1 con visualización automática de movimientos.
+13.2 Turnos representativos
+Estado inicial: Ana activo: Pikachu #71834 (Eléctrico, Dueño: Ana, Salud 100). Luis activo: Squirtle #40182 (Agua, Dueño: Luis, Salud 100).
+
+Turno 1 – Efectividad de tipo fuerte:
+
+Ambos envían acciones simultáneamente: Ana → ataque impactrueno, Luis → ataque pistola_agua.
+Pikachu (Vel 104) actúa primero: impactrueno (Eléctrico > Agua, x2.0) deja a Squirtle en Salud 22.
+Squirtle (Vel 46) actúa después: pistola_agua (Agua vs Eléctrico: inversa de Eléctrico > Agua, x0.5) hace poco daño. Pikachu queda en Salud 53.
+Turno 2 – Debilitar:
+
+Ambos envían acciones simultáneamente: Ana → ataque impactrueno, Luis → ataque pistola_agua.
+Pikachu actúa primero y debilita a Squirtle (Salud 0). La acción de Luis no se ejecuta (su Pokémon quedó debilitado antes de actuar). El sistema retira a Squirtle automáticamente.
+Inicio del Turno 3 – Reemplazo forzado:
+
+Luis debe elegir su próximo Pokémon. Elige Charmander #48291 (Fuego, Dueño original: Ana).
+Turno 3 – Cambio estratégico:
+
+Charmander no tiene desventaja contra Pikachu (Fuego vs Eléctrico, neutro). Ana decide cambiar de Pokémon activo para explotar ventaja de tipo.
+Ambos envían acciones simultáneamente: Ana → cambiar 29047 (Geodude), Luis → ataque ascuas.
+El cambio y el ataque se resuelven según velocidad. ascuas (Fuego vs Roca/Tierra: Roca > Fuego da x0.5 contra Roca; Fuego vs Tierra es neutro x1.0; modificador combinado x0.5) hace poco daño a Geodude.
+Turno 4 – Golpe efectivo:
+
+Ambos envían acciones simultáneamente: Ana → ataque lanzarrocas, Luis → ataque ascuas.
+lanzarrocas (Roca > Fuego, x2.0) golpea fuerte a Charmander. ascuas (Fuego vs Roca/Tierra, x0.5) hace poco daño. Charmander queda en Salud crítica.
+13.3 Cierre de batalla
+El sistema muestra resumen: ganador, turnos totales, nodo de ejecución, Pokémon sobrevivientes.
+Recompensas: ganadora Ana +100 monedas, Luis +30 monedas. Ambos montos se suman al acumulado histórico.
+Persistencia: se actualiza data/trainers.json y se registra en data/battles.log.
+Verificación sugerida: ejecutar perfil y clasificacion para confirmar cambios."
