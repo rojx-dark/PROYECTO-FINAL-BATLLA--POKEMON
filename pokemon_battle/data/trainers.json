@@ -1,1 +1,355 @@
-[]
+[
+  {
+    "clave": "123",
+    "equipo_activo": "sapo2",
+    "equipos": {
+      "sapo2": [
+        954506,
+        179152
+      ]
+    },
+    "inventario": [
+      {
+        "ataque": 74,
+        "defensa": 47,
+        "dueño_original": "ash",
+        "especie": "growlithe",
+        "id": 810142,
+        "movimientos": [
+          {
+            "nombre": "lanzallamas",
+            "poder_base": 90,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "llamarada",
+            "poder_base": 85,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "picotazo",
+            "poder_base": 35,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "rapidez",
+            "poder_base": 60,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Fuego"
+        ],
+        "velocidad": 63
+      },
+      {
+        "ataque": 74,
+        "defensa": 48,
+        "dueño_original": "ash",
+        "especie": "growlithe",
+        "id": 954506,
+        "movimientos": [
+          {
+            "nombre": "nitrocarga",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "colmillo_igneo",
+            "poder_base": 65,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "pedrada",
+            "poder_base": 30,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "terremoto",
+            "poder_base": 100,
+            "tipo": "Tierra"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Fuego"
+        ],
+        "velocidad": 64
+      },
+      {
+        "ataque": 53,
+        "defensa": 53,
+        "dueño_original": "ash",
+        "especie": "bulbasaur",
+        "id": 179152,
+        "movimientos": [
+          {
+            "nombre": "hoja_afilada",
+            "poder_base": 55,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "rayo_solar",
+            "poder_base": 120,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "llamarada",
+            "poder_base": 85,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "lanza_mugre",
+            "poder_base": 65,
+            "tipo": "Tierra"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Planta"
+        ],
+        "velocidad": 49
+      }
+    ],
+    "monedas_actuales": 190,
+    "monedas_acumuladas": 190,
+    "sobres": [],
+    "usuario": "ash",
+    "victorias": 1
+  },
+  {
+    "clave": "4848",
+    "equipo_activo": null,
+    "equipos": {},
+    "inventario": [
+      {
+        "ataque": 53,
+        "defensa": 53,
+        "dueño_original": "juan",
+        "especie": "bulbasaur",
+        "id": 971363,
+        "movimientos": [
+          {
+            "nombre": "hoja_afilada",
+            "poder_base": 55,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "drenadoras",
+            "poder_base": 35,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "avalancha_hielo",
+            "poder_base": 60,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "chispa",
+            "poder_base": 50,
+            "tipo": "Electrico"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Planta"
+        ],
+        "velocidad": 49
+      },
+      {
+        "ataque": 42,
+        "defensa": 41,
+        "dueño_original": "juan",
+        "especie": "vulpix",
+        "id": 931939,
+        "movimientos": [
+          {
+            "nombre": "giro_fuego",
+            "poder_base": 60,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "colmillo_igneo",
+            "poder_base": 65,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "hoja_afilada",
+            "poder_base": 55,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "picotazo",
+            "poder_base": 35,
+            "tipo": "Volador"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Fuego"
+        ],
+        "velocidad": 66
+      },
+      {
+        "ataque": 86,
+        "defensa": 108,
+        "dueño_original": "juan",
+        "especie": "geodude",
+        "id": 349083,
+        "movimientos": [
+          {
+            "nombre": "fuerza_telur",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "tumba_rocas",
+            "poder_base": 28,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "nitrocarga",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "pedrada",
+            "poder_base": 30,
+            "tipo": "Roca"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Roca",
+          "Tierra"
+        ],
+        "velocidad": 22
+      }
+    ],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres": [],
+    "usuario": "juan",
+    "victorias": 0
+  },
+  {
+    "clave": "123",
+    "equipo_activo": "sapo",
+    "equipos": {
+      "sapo": [
+        52706,
+        39225
+      ]
+    },
+    "inventario": [
+      {
+        "ataque": 68,
+        "defensa": 63,
+        "dueño_original": "misty",
+        "especie": "venomoth",
+        "id": 395693,
+        "movimientos": [
+          {
+            "nombre": "picadura",
+            "poder_base": 32,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "megacuerno",
+            "poder_base": 120,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "corte",
+            "poder_base": 50,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "hoja_afilada",
+            "poder_base": 55,
+            "tipo": "Planta"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Bicho"
+        ],
+        "velocidad": 95
+      },
+      {
+        "ataque": 57,
+        "defensa": 42,
+        "dueño_original": "misty",
+        "especie": "pikachu",
+        "id": 52706,
+        "movimientos": [
+          {
+            "nombre": "electrobola",
+            "poder_base": 60,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "voltio_cruel",
+            "poder_base": 80,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "avalancha",
+            "poder_base": 75,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "destructor",
+            "poder_base": 80,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Electrico"
+        ],
+        "velocidad": 94
+      },
+      {
+        "ataque": 76,
+        "defensa": 70,
+        "dueño_original": "misty",
+        "especie": "venomoth",
+        "id": 39225,
+        "movimientos": [
+          {
+            "nombre": "acoso",
+            "poder_base": 50,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "zumbido",
+            "poder_base": 90,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "chispa",
+            "poder_base": 50,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "fuerza_telur",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          }
+        ],
+        "rareza": "raro",
+        "tipos": [
+          "Bicho"
+        ],
+        "velocidad": 105
+      }
+    ],
+    "monedas_actuales": 330,
+    "monedas_acumuladas": 330,
+    "sobres": [],
+    "usuario": "misty",
+    "victorias": 3
+  }
+]
