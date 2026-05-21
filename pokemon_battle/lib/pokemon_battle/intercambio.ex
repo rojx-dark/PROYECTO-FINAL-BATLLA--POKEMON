@@ -9,6 +9,9 @@ defmodule PokemonBattle.Intercambio do
 
   @id_prefix "IC-"
 
+  @timeout_creacion 60_000 # 60 segundos
+  @timeout_activo 120_000   # 120 segundos
+
   # Registro ETS de salas activas: {codigo -> pid}
   @tabla_intercambios :intercambios_activos
 
@@ -18,14 +21,40 @@ defmodule PokemonBattle.Intercambio do
     codigo = generar_codigo()
     config = %{codigo: codigo, creador: usuario}
     {:ok, _pid} = SupervisorBatallas.iniciar_intercambio(config)
-    IO.puts("[Sala #{codigo} creada] Comparte este código con el otro entrenador.")
-    :ok
+    IO.puts("[Sala #{codigo} creada] Comparte este código con el otro entrenador. Expirará en 60 segundos si nadie se une.")
+    {:ok, codigo}
+  end
+
+  def listar_intercambios do
+    if :ets.whereis(@tabla_intercambios) != :undefined do
+      salas = :ets.tab2list(@tabla_intercambios)
+      if salas == [] do
+        IO.puts("No hay salas de intercambio activas.")
+      else
+        IO.puts("=== Salas de Intercambio Activas ===")
+        Enum.each(salas, fn {codigo, pid} ->
+          estado = try do
+            GenServer.call(pid, :get_estado, 500)
+          catch
+            :exit, _ -> nil
+          end
+          case estado do
+            nil -> IO.puts("  #{codigo} - (no responde)")
+            %{creador: creador, invitado: invitado, oferta: oferta} ->
+              invitado_str = if invitado, do: invitado, else: "?"
+              IO.puts("  #{codigo} | Creador: #{creador} | Invitado: #{invitado_str} | Ofertas: #{map_size(oferta)}")
+          end
+        end)
+      end
+    else
+      IO.puts("ETS de intercambio no inicializado.")
+    end
   end
 
   def unirse_sala(usuario, codigo) do
     case buscar_sala(codigo) do
       nil ->
-        IO.puts("[Error] Sala #{codigo} no existe.")
+        IO.puts("[Error] Sala #{codigo} no existe o ya expiró.")
 
       pid_sala ->
         GenServer.call(pid_sala, {:unirse, usuario})
@@ -34,21 +63,21 @@ defmodule PokemonBattle.Intercambio do
 
   def ofrecer_pokemon(usuario, id_pokemon) do
     case sala_del_usuario(usuario) do
-      nil      -> IO.puts("[Error] No estás en ninguna sala de intercambio.")
+      nil      -> IO.puts("[Error] No estás en ninguna sala de intercambio o ya expiró.")
       pid_sala -> GenServer.call(pid_sala, {:ofrecer, usuario, id_pokemon})
     end
   end
 
   def confirmar_intercambio(usuario) do
     case sala_del_usuario(usuario) do
-      nil      -> IO.puts("[Error] No estás en ninguna sala de intercambio.")
+      nil      -> IO.puts("[Error] No estás en ninguna sala de intercambio o ya expiró.")
       pid_sala -> GenServer.call(pid_sala, {:confirmar, usuario})
     end
   end
 
   def cancelar_intercambio(usuario) do
     case sala_del_usuario(usuario) do
-      nil      -> IO.puts("[Error] No estás en ninguna sala de intercambio.")
+      nil      -> IO.puts("[Error] No estás en ninguna sala de intercambio o ya expiró.")
       pid_sala -> GenServer.call(pid_sala, {:cancelar, usuario})
     end
   end
@@ -60,12 +89,16 @@ defmodule PokemonBattle.Intercambio do
     asegurar_tabla()
     :ets.insert(@tabla_intercambios, {codigo, self()})
 
+    # Iniciar temporizador de creación
+    timer = Process.send_after(self(), :timeout_creacion, @timeout_creacion)
+
     estado = %{
       codigo:     codigo,
       creador:    creador,
       invitado:   nil,
       oferta:     %{},    # %{usuario => id_pokemon}
-      confirmado: MapSet.new()
+      confirmado: MapSet.new(),
+      timer:      timer
     }
 
     {:ok, estado}
@@ -83,8 +116,14 @@ defmodule PokemonBattle.Intercambio do
         {:reply, :error, estado}
 
       true ->
-        estado_con_invitado = %{estado | invitado: usuario}
-        IO.puts("[Sala #{estado.codigo}] #{usuario} se ha unido. Ya pueden intercambiar.")
+        # Cancelar el temporizador de creación
+        if estado.timer, do: Process.cancel_timer(estado.timer)
+
+        # Iniciar el temporizador de negociación activa
+        nuevo_timer = Process.send_after(self(), :timeout_activo, @timeout_activo)
+
+        estado_con_invitado = %{estado | invitado: usuario, timer: nuevo_timer}
+        IO.puts("[Sala #{estado.codigo}] #{usuario} se ha unido. Ya pueden intercambiar (Tiempo límite: 120s).")
         {:reply, :ok, estado_con_invitado}
     end
   end
@@ -125,6 +164,7 @@ defmodule PokemonBattle.Intercambio do
   @impl true
   def handle_call({:cancelar, usuario}, _from, estado) do
     IO.puts("[Sala #{estado.codigo}] #{usuario} canceló el intercambio. Sala cerrada.")
+    if estado.timer, do: Process.cancel_timer(estado.timer)
     limpiar_tabla(estado.codigo)
     {:stop, :normal, :ok, estado}
   end
@@ -134,8 +174,23 @@ defmodule PokemonBattle.Intercambio do
 
   @impl true
   def terminate(_reason, estado) do
+    if Map.has_key?(estado, :timer) and estado.timer, do: Process.cancel_timer(estado.timer)
     limpiar_tabla(estado.codigo)
     :ok
+  end
+
+  @impl true
+  def handle_info(:timeout_creacion, estado) do
+    IO.puts("\n[Sala #{estado.codigo}] Expiró por límite de tiempo (timeout) sin que se uniera ningún entrenador. Sala cerrada.")
+    limpiar_tabla(estado.codigo)
+    {:stop, :normal, estado}
+  end
+
+  @impl true
+  def handle_info(:timeout_activo, estado) do
+    IO.puts("\n[Sala #{estado.codigo}] Expiró por inactividad durante la negociación (límite de 120s superado). Sala cerrada.")
+    limpiar_tabla(estado.codigo)
+    {:stop, :normal, estado}
   end
 
   # ─── Helpers ────────────────────────────────────────────────────────────────
@@ -156,6 +211,7 @@ defmodule PokemonBattle.Intercambio do
       {:error, mensaje} -> IO.puts("[Error en intercambio] #{mensaje}")
     end
 
+    if estado.timer, do: Process.cancel_timer(estado.timer)
     limpiar_tabla(estado.codigo)
     {:stop, :normal, :ok, estado}
   end
