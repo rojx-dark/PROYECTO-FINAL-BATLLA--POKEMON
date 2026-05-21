@@ -7,6 +7,17 @@ defmodule PokemonBattle.Application do
 
   @impl true
   def start(_type, _args) do
+    # Iniciar automáticamente el nodo distributed si no está vivo
+    if Node.alive?() == false do
+      case Node.start(:"servidor@127.0.0.1") do
+        {:ok, _pid} ->
+          Node.set_cookie(:intercambio_secreto)
+          IO.puts("\n[Cluster] Nodo iniciado automáticamente como servidor@127.0.0.1 con cookie :intercambio_secreto")
+        {:error, razon} ->
+          IO.puts("\n[Cluster] Advertencia: No se pudo iniciar el nodo distribuido automáticamente: #{inspect(razon)}")
+      end
+    end
+
     children = [
       # Supervisor de batallas (DynamicSupervisor)
       {PokemonBattle.SupervisorBatallas, []},
