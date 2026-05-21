@@ -94,9 +94,11 @@ defmodule PokemonBattle.GestorEntrenadores do
         }
         nuevo_estado = Map.put(estado, usuario, nuevo_entrenador)
         persistir(nuevo_estado)
+        mostrar_menu_bienvenida(usuario)
         {:reply, {:ok, "¡Bienvenido, #{usuario}! Cuenta creada. Recibes 1 sobre básico gratis."}, nuevo_estado}
 
       %{clave: ^clave} ->
+        mostrar_menu_bienvenida(usuario)
         {:reply, {:ok, "¡Bienvenido de nuevo, #{usuario}!"}, estado}
 
       _ ->
@@ -319,16 +321,22 @@ defmodule PokemonBattle.GestorEntrenadores do
   @impl true
   def handle_call({:consumir_sobre, usuario, id_str}, _from, estado) do
     case Map.get(estado, usuario) do
-      nil ->
-        {:reply, {:error, "Usuario no encontrado."}, estado}
+    nil ->
+    {:reply, {:error, "Usuario no encontrado."}, estado}
 
       entrenador ->
         sobre_encontrado =
           cond do
-            id_str == "ultimo" -> List.last(entrenador.sobres)
+            id_str == "ultimo" ->
+              List.last(entrenador.sobres)
+
             true ->
-              id_buscado = String.to_integer(id_str)
-              Enum.find(entrenador.sobres, fn sobre -> sobre.id == id_buscado end)
+              case Integer.parse(id_str) do
+                {id_int, ""} ->
+                  Enum.find(entrenador.sobres, fn sobre -> sobre.id == id_int end)
+                _ ->
+                  Enum.find(entrenador.sobres, fn sobre -> sobre.tipo == id_str end)
+              end
           end
 
         if sobre_encontrado do
@@ -509,5 +517,36 @@ defmodule PokemonBattle.GestorEntrenadores do
         %{nombre: movimiento["nombre"], tipo: movimiento["tipo"], poder_base: movimiento["poder_base"]}
       end)
     }
+  end
+
+  defp mostrar_menu_bienvenida(usuario) do
+    IO.puts "\n=== Menú de #{usuario} ==="
+    IO.puts "Copia y pega estos comandos exactos en la consola (reemplazando los valores en mayúsculas):"
+    IO.puts ""
+    IO.puts "--- GESTIÓN DE CUENTA ---"
+    IO.puts "  PokemonBattle.GestorEntrenadores.iniciar_sesion(\"#{usuario}\", \"CLAVE\")"
+    IO.puts "  PokemonBattle.GestorEntrenadores.perfil(\"#{usuario}\")"
+    IO.puts ""
+    IO.puts "--- SOBRES E INVENTARIO ---"
+    IO.puts "  PokemonBattle.SistemaSobres.abrir_sobre(\"#{usuario}\", \"ultimo\")"
+    IO.puts "  PokemonBattle.GestorEntrenadores.inventario(\"#{usuario}\")"
+    IO.puts ""
+    IO.puts "--- EQUIPOS ---"
+    IO.puts "  PokemonBattle.GestorEntrenadores.crear_equipo(\"#{usuario}\", \"NOMBRE_EQUIPO\", [ID_POKEMON_1, ID_POKEMON_2])"
+    IO.puts "  PokemonBattle.GestorEntrenadores.usar_equipo(\"#{usuario}\", \"NOMBRE_EQUIPO\")"
+    IO.puts ""
+    IO.puts "--- BATALLAS ---"
+    IO.puts "  PokemonBattle.GestorSalas.crear_sala(\"#{usuario}\")"
+    IO.puts "  PokemonBattle.GestorSalas.unirse_sala(\"#{usuario}\", \"CODIGO_SALA\")"
+    IO.puts "  PokemonBattle.GestorSalas.iniciar_batalla(\"CODIGO_SALA\", \"#{usuario}\")"
+    IO.puts "  PokemonBattle.GestorSalas.enviar_accion(\"#{usuario}\", {:ataque, \"NOMBRE_ATAQUE\"})"
+    IO.puts "  PokemonBattle.GestorSalas.enviar_accion(\"#{usuario}\", :rendirse)"
+    IO.puts ""
+    IO.puts "--- INTERCAMBIOS ---"
+    IO.puts "  PokemonBattle.Intercambio.crear_sala(\"#{usuario}\")"
+    IO.puts "  PokemonBattle.Intercambio.unirse_sala(\"#{usuario}\", \"CODIGO_SALA\")"
+    IO.puts "  PokemonBattle.Intercambio.ofrecer_pokemon(\"#{usuario}\", ID_POKEMON)"
+    IO.puts "  PokemonBattle.Intercambio.confirmar_intercambio(\"#{usuario}\")"
+    IO.puts "===========================\n"
   end
 end

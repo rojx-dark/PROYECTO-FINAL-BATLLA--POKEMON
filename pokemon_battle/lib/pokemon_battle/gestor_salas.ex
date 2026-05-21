@@ -30,6 +30,12 @@ defmodule PokemonBattle.GestorSalas do
   def sala_de(usuario),
     do: GenServer.call(__MODULE__, {:sala_de, usuario})
 
+  def estado_batalla(usuario),
+    do: GenServer.call(__MODULE__, {:estado_batalla, usuario})
+
+  def sala_info(id_sala),
+    do: GenServer.call(__MODULE__, {:sala_info, id_sala})
+
   # ─── Callbacks GenServer ─────────────────────────────────────────────────────
 
   @impl true
@@ -160,7 +166,39 @@ defmodule PokemonBattle.GestorSalas do
   end
 
   @impl true
+  def handle_call({:sala_info, id_sala}, _from, estado) do
+    {:reply, Map.get(estado.salas, id_sala), estado}
+  end
+
+  @impl true
   def handle_call({:sala_de, usuario}, _from, estado) do
     {:reply, Map.get(estado.jugador_sala, usuario), estado}
+  end
+
+  @impl true
+  def handle_call({:estado_batalla, usuario}, _from, estado) do
+    case Map.get(estado.jugador_sala, usuario) do
+      nil ->
+        {:reply, {:error, "No estás en ninguna sala."}, estado}
+      id_sala ->
+        case Map.get(estado.salas, id_sala) do
+          %{batalla_pid: pid} when is_pid(pid) ->
+            if Process.alive?(pid) do
+              resultado = PokemonBattle.Batalla.estado(pid)
+              case resultado do
+                {:error, :batalla_terminada} ->
+                  {:reply, {:terminada, "La batalla ha concluido."}, estado}
+                estado_batalla ->
+                  {:reply, {:ok, estado_batalla}, estado}
+              end
+            else
+              {:reply, {:terminada, "La batalla ha concluido."}, estado}
+            end
+          %{batalla_pid: nil} ->
+            {:reply, {:esperando, "La batalla aún no ha iniciado."}, estado}
+          _ ->
+            {:reply, {:error, "Sala inválida."}, estado}
+        end
+    end
   end
 end
