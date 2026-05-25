@@ -1,11 +1,15 @@
 [
   {
     "clave": "123",
-    "equipo_activo": "sapo2",
+    "equipo_activo": "x",
     "equipos": {
       "sapo2": [
         954506,
         179152
+      ],
+      "x": [
+        599287,
+        678266
       ]
     },
     "inventario": [
@@ -110,12 +114,443 @@
           "Planta"
         ],
         "velocidad": 49
+      },
+      {
+        "ataque": 48,
+        "defensa": 47,
+        "dueño_original": "ash",
+        "especie": "vulpix",
+        "id": 375938,
+        "movimientos": [
+          {
+            "nombre": "ascuas",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "giro_fuego",
+            "poder_base": 60,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "tumba_rocas",
+            "poder_base": 28,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "onda_trueno",
+            "poder_base": 40,
+            "tipo": "Electrico"
+          }
+        ],
+        "rareza": "raro",
+        "tipos": [
+          "Fuego"
+        ],
+        "velocidad": 77
+      },
+      {
+        "ataque": 50,
+        "defensa": 50,
+        "dueño_original": "ash",
+        "especie": "bulbasaur",
+        "id": 627212,
+        "movimientos": [
+          {
+            "nombre": "rayo_solar",
+            "poder_base": 120,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "energia_bola",
+            "poder_base": 80,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "aire_afilado",
+            "poder_base": 75,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "picadura",
+            "poder_base": 32,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Planta"
+        ],
+        "velocidad": 46
+      },
+      {
+        "ataque": 52,
+        "defensa": 70,
+        "dueño_original": "ash",
+        "especie": "squirtle",
+        "id": 599287,
+        "movimientos": [
+          {
+            "nombre": "pistola_agua",
+            "poder_base": 40,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "hidrobomba",
+            "poder_base": 110,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "corte",
+            "poder_base": 50,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "picotazo",
+            "poder_base": 35,
+            "tipo": "Volador"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Agua"
+        ],
+        "velocidad": 46
+      },
+      {
+        "ataque": 36,
+        "defensa": 31,
+        "dueño_original": "ash",
+        "especie": "gastly",
+        "id": 678266,
+        "movimientos": [
+          {
+            "nombre": "ataque_rapido",
+            "poder_base": 40,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "corte",
+            "poder_base": 50,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "acrobata",
+            "poder_base": 55,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "ataque_ala",
+            "poder_base": 60,
+            "tipo": "Volador"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Normal"
+        ],
+        "velocidad": 82
+      },
+      {
+        "ataque": 76,
+        "defensa": 70,
+        "dueño_original": "misty",
+        "especie": "venomoth",
+        "id": 39225,
+        "movimientos": [
+          {
+            "nombre": "acoso",
+            "poder_base": 50,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "zumbido",
+            "poder_base": 90,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "chispa",
+            "poder_base": 50,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "fuerza_telur",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          }
+        ],
+        "rareza": "raro",
+        "tipos": [
+          "Bicho"
+        ],
+        "velocidad": 105
+      },
+      {
+        "ataque": 52,
+        "defensa": 57,
+        "dueño_original": "carlos",
+        "especie": "oddish",
+        "id": 138195,
+        "movimientos": [
+          {
+            "nombre": "bomba_germen",
+            "poder_base": 80,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "drenadoras",
+            "poder_base": 35,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "zumbido",
+            "poder_base": 90,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "tijera_x",
+            "poder_base": 80,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Planta"
+        ],
+        "velocidad": 31
       }
     ],
-    "monedas_actuales": 190,
-    "monedas_acumuladas": 190,
-    "sobres": [],
+    "monedas_actuales": 120,
+    "monedas_acumuladas": 420,
+    "sobres": [
+      {
+        "id": 58558,
+        "tipo": "basico"
+      }
+    ],
     "usuario": "ash",
+    "victorias": 3
+  },
+  {
+    "clave": "456",
+    "equipo_activo": "x2",
+    "equipos": {
+      "x2": [
+        138195,
+        240265
+      ]
+    },
+    "inventario": [
+      {
+        "ataque": 48,
+        "defensa": 42,
+        "dueño_original": "carlos",
+        "especie": "pidgey",
+        "id": 458414,
+        "movimientos": [
+          {
+            "nombre": "picotazo",
+            "poder_base": 35,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "acrobata",
+            "poder_base": 55,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "rayo_hielo",
+            "poder_base": 90,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "ataque_rapido",
+            "poder_base": 40,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Normal",
+          "Volador"
+        ],
+        "velocidad": 59
+      },
+      {
+        "ataque": 50,
+        "defensa": 61,
+        "dueño_original": "carlos",
+        "especie": "seel",
+        "id": 240265,
+        "movimientos": [
+          {
+            "nombre": "acua_jet",
+            "poder_base": 40,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "rayo_burbuja",
+            "poder_base": 65,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "fuerza_telur",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "voltio_cruel",
+            "poder_base": 80,
+            "tipo": "Electrico"
+          }
+        ],
+        "rareza": "raro",
+        "tipos": [
+          "Agua"
+        ],
+        "velocidad": 50
+      },
+      {
+        "ataque": 44,
+        "defensa": 43,
+        "dueño_original": "carlos",
+        "especie": "vulpix",
+        "id": 951901,
+        "movimientos": [
+          {
+            "nombre": "nitrocarga",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "llamarada",
+            "poder_base": 85,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "placaje",
+            "poder_base": 35,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "energia_bola",
+            "poder_base": 80,
+            "tipo": "Planta"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Fuego"
+        ],
+        "velocidad": 70
+      },
+      {
+        "ataque": 43,
+        "defensa": 42,
+        "dueño_original": "carlos",
+        "especie": "vulpix",
+        "id": 894678,
+        "movimientos": [
+          {
+            "nombre": "ascuas",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "giro_fuego",
+            "poder_base": 60,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "avalancha_hielo",
+            "poder_base": 60,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "acoso",
+            "poder_base": 50,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Fuego"
+        ],
+        "velocidad": 69
+      },
+      {
+        "ataque": 56,
+        "defensa": 51,
+        "dueño_original": "carlos",
+        "especie": "psyduck",
+        "id": 460515,
+        "movimientos": [
+          {
+            "nombre": "hidrobomba",
+            "poder_base": 110,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "acua_jet",
+            "poder_base": 40,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "ascuas",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "rafaga",
+            "poder_base": 60,
+            "tipo": "Volador"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Agua"
+        ],
+        "velocidad": 59
+      },
+      {
+        "ataque": 47,
+        "defensa": 58,
+        "dueño_original": "ash",
+        "especie": "seel",
+        "id": 522490,
+        "movimientos": [
+          {
+            "nombre": "acua_jet",
+            "poder_base": 40,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "cascada",
+            "poder_base": 80,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "tumba_rocas",
+            "poder_base": 28,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "impactrueno",
+            "poder_base": 65,
+            "tipo": "Electrico"
+          }
+        ],
+        "rareza": "comun",
+        "tipos": [
+          "Agua"
+        ],
+        "velocidad": 47
+      }
+    ],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 100,
+    "sobres": [],
+    "usuario": "carlos",
     "victorias": 1
   },
   {
@@ -312,11 +747,11 @@
         "velocidad": 94
       },
       {
-        "ataque": 76,
-        "defensa": 70,
-        "dueño_original": "misty",
+        "ataque": 70,
+        "defensa": 65,
+        "dueño_original": "ash",
         "especie": "venomoth",
-        "id": 39225,
+        "id": 249720,
         "movimientos": [
           {
             "nombre": "acoso",
@@ -324,30 +759,30 @@
             "tipo": "Bicho"
           },
           {
-            "nombre": "zumbido",
-            "poder_base": 90,
+            "nombre": "pin_misil",
+            "poder_base": 25,
             "tipo": "Bicho"
           },
           {
-            "nombre": "chispa",
-            "poder_base": 50,
-            "tipo": "Electrico"
+            "nombre": "hidrobomba",
+            "poder_base": 110,
+            "tipo": "Agua"
           },
           {
-            "nombre": "fuerza_telur",
-            "poder_base": 60,
-            "tipo": "Tierra"
+            "nombre": "colmillo_igneo",
+            "poder_base": 65,
+            "tipo": "Fuego"
           }
         ],
-        "rareza": "raro",
+        "rareza": "comun",
         "tipos": [
           "Bicho"
         ],
-        "velocidad": 105
+        "velocidad": 97
       }
     ],
-    "monedas_actuales": 330,
-    "monedas_acumuladas": 330,
+    "monedas_actuales": 390,
+    "monedas_acumuladas": 390,
     "sobres": [],
     "usuario": "misty",
     "victorias": 3

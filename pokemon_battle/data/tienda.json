@@ -13,6 +13,13 @@
       "prob_comun": 40,
       "prob_raro": 45,
       "prob_epico": 15
+    },
+    {
+      "tipo": "legendario",
+      "precio": 500,
+      "prob_comun": 20,
+      "prob_raro": 30,
+      "prob_epico": 50
     }
   ]
 }

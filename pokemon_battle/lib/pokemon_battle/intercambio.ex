@@ -17,6 +17,9 @@ defmodule PokemonBattle.Intercambio do
 
   # ─── API pública ─────────────────────────────────────────────────────────────
 
+  def start_link(config),
+    do: GenServer.start_link(__MODULE__, config)
+
   def crear_sala(usuario) do
     codigo = generar_codigo()
     config = %{codigo: codigo, creador: usuario}
@@ -82,6 +85,28 @@ defmodule PokemonBattle.Intercambio do
     end
   end
 
+  @doc """
+  Consulta el estado de la sala en la que participa `usuario`.
+  Retorna:
+    {:ok, estado}           - sala activa con dos participantes
+    {:esperando, codigo}    - sala creada, sin rival aún
+    {:completado, mensaje}  - intercambio ya ejecutado
+    {:cancelado, mensaje}   - sala cancelada
+    {:error, :sin_sala}     - usuario sin sala activa
+  """
+  def estado_sala(usuario) do
+    case sala_del_usuario(usuario) do
+      nil ->
+        {:error, :sin_sala}
+      pid_sala ->
+        try do
+          GenServer.call(pid_sala, {:estado_sala, usuario}, 2000)
+        catch
+          :exit, _ -> {:error, :sin_sala}
+        end
+    end
+  end
+
   # ─── GenServer callbacks ─────────────────────────────────────────────────────
 
   @impl true
@@ -98,7 +123,8 @@ defmodule PokemonBattle.Intercambio do
       invitado:   nil,
       oferta:     %{},    # %{usuario => id_pokemon}
       confirmado: MapSet.new(),
-      timer:      timer
+      timer:      timer,
+      resultado:  nil
     }
 
     {:ok, estado}
@@ -166,11 +192,28 @@ defmodule PokemonBattle.Intercambio do
     IO.puts("[Sala #{estado.codigo}] #{usuario} canceló el intercambio. Sala cerrada.")
     if estado.timer, do: Process.cancel_timer(estado.timer)
     limpiar_tabla(estado.codigo)
-    {:stop, :normal, :ok, estado}
+    mensaje = "❌ #{usuario} canceló el intercambio."
+    {:stop, :normal, :ok, %{estado | resultado: {:cancelado, mensaje}}}
   end
 
   @impl true
   def handle_call(:get_estado, _from, estado), do: {:reply, estado, estado}
+
+  @impl true
+  def handle_call({:estado_sala, _usuario}, _from, %{resultado: resultado} = estado) when resultado != nil do
+    {:reply, resultado, estado}
+  end
+
+  @impl true
+  def handle_call({:estado_sala, _usuario}, _from, estado) do
+    respuesta =
+      if estado.invitado == nil do
+        {:esperando, estado.codigo}
+      else
+        {:ok, estado}
+      end
+    {:reply, respuesta, estado}
+  end
 
   @impl true
   def terminate(_reason, estado) do
@@ -200,20 +243,25 @@ defmodule PokemonBattle.Intercambio do
     id_pokemon_creador  = Map.get(estado.oferta, usuario_creador)
     id_pokemon_invitado = Map.get(estado.oferta, usuario_invitado)
 
-    with {:ok, pokemon_recibido_por_creador}  <- GestorEntrenadores.transferir_pokemon(usuario_invitado, usuario_creador, id_pokemon_invitado),
-         {:ok, pokemon_recibido_por_invitado} <- GestorEntrenadores.transferir_pokemon(usuario_creador, usuario_invitado, id_pokemon_creador) do
-      IO.puts("""
-      [Intercambio completado]
-        #{usuario_creador} recibió [##{pokemon_recibido_por_creador.id}] #{String.capitalize(pokemon_recibido_por_creador.especie)}.
-        #{usuario_invitado} recibió [##{pokemon_recibido_por_invitado.id}] #{String.capitalize(pokemon_recibido_por_invitado.especie)}.
-      """)
-    else
-      {:error, mensaje} -> IO.puts("[Error en intercambio] #{mensaje}")
-    end
+    mensaje_resultado =
+      with {:ok, pokemon_recibido_por_creador}  <- GestorEntrenadores.transferir_pokemon(usuario_invitado, usuario_creador, id_pokemon_invitado),
+           {:ok, pokemon_recibido_por_invitado} <- GestorEntrenadores.transferir_pokemon(usuario_creador, usuario_invitado, id_pokemon_creador) do
+        msg = """
+        [Intercambio completado]
+          #{usuario_creador} recibió [##{pokemon_recibido_por_creador.id}] #{String.capitalize(pokemon_recibido_por_creador.especie)}.
+          #{usuario_invitado} recibió [##{pokemon_recibido_por_invitado.id}] #{String.capitalize(pokemon_recibido_por_invitado.especie)}.
+        """
+        IO.puts(msg)
+        "🎉 Intercambio completado. #{usuario_creador} y #{usuario_invitado} intercambiaron sus Pokémon."
+      else
+        {:error, mensaje} ->
+          IO.puts("[Error en intercambio] #{mensaje}")
+          "⚠️ Error en el intercambio: #{mensaje}"
+      end
 
     if estado.timer, do: Process.cancel_timer(estado.timer)
     limpiar_tabla(estado.codigo)
-    {:stop, :normal, :ok, estado}
+    {:stop, :normal, :ok, %{estado | resultado: {:completado, mensaje_resultado}}}
   end
 
   defp mostrar_estado_sala(estado) do

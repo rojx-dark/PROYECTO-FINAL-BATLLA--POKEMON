@@ -2,3 +2,6 @@
 {"nodo":"misty@127.0.0.1","jugador1":"ash","jugador2":"misty","duracion":240,"fecha":"2026-05-21T01:06:09.293000Z","ganador":"misty","turnos":12}
 {"nodo":"misty@127.0.0.1","jugador1":"ash","jugador2":"misty","duracion":260,"fecha":"2026-05-21T01:06:29.296000Z","ganador":"misty","turnos":13}
 {"jugador1":"ash","jugador2":"misty","nodo":"misty@127.0.0.1","duracion":107,"fecha":"2026-05-21T05:07:01.533000Z","ganador":"ash","turnos":9}
+{"jugador1":"ash","jugador2":"misty","nodo":"misty@127.0.0.1","duracion":140,"fecha":"2026-05-21T19:27:02.284000Z","ganador":"ash","turnos":7}
+{"nodo":"arena@127.0.0.1","jugador1":"ash","jugador2":"misty","ganador":"ash","duracion":61,"fecha":"2026-05-21T19:41:05.737000Z","turnos":9}
+{"jugador1":"ash","jugador2":"carlos","nodo":"misty@127.0.0.1","duracion":135,"fecha":"2026-05-25T03:11:45.662000Z","ganador":"carlos","turnos":11}

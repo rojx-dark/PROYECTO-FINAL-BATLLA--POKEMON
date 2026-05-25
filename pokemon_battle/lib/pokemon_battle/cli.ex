@@ -7,7 +7,7 @@ defmodule PokemonBattle.CLI do
 
   def iniciar do
     IO.puts "\n========================================"
-    IO.puts "   🎮 BIENVENIDO A POKÉMON BATTLE 🎮"
+    IO.puts "   BIENVENIDO A POKÉMON BATTLE"
     IO.puts "========================================\n"
     conectar_nodo()
   end
@@ -19,13 +19,13 @@ defmodule PokemonBattle.CLI do
       nodo = String.to_atom(nodo_str)
       case Node.connect(nodo) do
         true ->
-          IO.puts("✅ Conexión exitosa al servidor.")
+          IO.puts("Conexión exitosa al servidor.")
           nodo
         false ->
-          IO.puts("❌ Falló la conexión. Jugando en modo local.")
+          IO.puts("Falló la conexión. Jugando en modo local.")
           Node.self()
         :ignored ->
-          IO.puts("✅ Ya estás conectado.")
+          IO.puts("Ya estás conectado.")
           nodo
       end
     else
@@ -55,19 +55,19 @@ defmodule PokemonBattle.CLI do
 
         case ejecutar(servidor, PokemonBattle.GestorEntrenadores, :iniciar_sesion, [usuario, clave]) do
           {:ok, _msg} ->
-            IO.puts("\n✅ ¡Bienvenido, #{usuario}!")
+            IO.puts("\n¡Bienvenido, #{usuario}!")
             menu_usuario(servidor, usuario)
           {:error, msg} ->
-            IO.puts("\n❌ Error: " <> msg)
+            IO.puts("\nError: " <> msg)
             menu_auth(servidor)
           _ ->
-            IO.puts("\n❌ Error de conexión con el servidor.")
+            IO.puts("\nError de conexión con el servidor.")
             menu_auth(servidor)
         end
       "2" ->
         IO.puts("¡Hasta luego!")
       _ ->
-        IO.puts("⚠️ Opción inválida.")
+        IO.puts("Opción inválida.")
         menu_auth(servidor)
     end
   end
@@ -78,16 +78,17 @@ defmodule PokemonBattle.CLI do
 
   defp menu_usuario(servidor, usuario) do
     IO.puts "\n===================================="
-    IO.puts " 🏕️  CAMPAMENTO DE #{String.upcase(usuario)}"
+    IO.puts " CAMPAMENTO DE #{String.upcase(usuario)}"
     IO.puts "===================================="
-    IO.puts "1. 📊 Mi Perfil"
-    IO.puts "2. 🎁 Abrir Sobre de Pokémon"
-    IO.puts "3. 🎒 Mi Inventario"
-    IO.puts "4. 📋 Crear Equipo"
-    IO.puts "5. ⭐ Seleccionar Equipo Activo"
-    IO.puts "6. ⚔️  Sala de Batallas"
-    IO.puts "7. 🤝 Sala de Intercambios"
-    IO.puts "8. 🚪 Cerrar Sesión"
+    IO.puts "1. Mi Perfil"
+    IO.puts "2. Abrir Sobre de Pokémon"
+    IO.puts "3. Comprar Sobre de Pokémon"
+    IO.puts "4. Mi Inventario"
+    IO.puts "5. Crear Equipo"
+    IO.puts "6. Seleccionar Equipo Activo"
+    IO.puts "7. Sala de Batallas"
+    IO.puts "8. Sala de Intercambios"
+    IO.puts "9. Cerrar Sesión"
     IO.puts "===================================="
 
     case IO.gets("Elige: ") |> String.trim() do
@@ -99,9 +100,13 @@ defmodule PokemonBattle.CLI do
         ejecutar(servidor, PokemonBattle.SistemaSobres, :abrir_sobre, [usuario, tipo])
         menu_usuario(servidor, usuario)
       "3" ->
-        ejecutar(servidor, PokemonBattle.GestorEntrenadores, :inventario, [usuario])
+        tipo = IO.gets("Tipo de sobre a comprar (basico/raro/legendario): ") |> String.trim()
+        ejecutar(servidor, PokemonBattle.SistemaSobres, :comprar_sobre, [usuario, tipo])
         menu_usuario(servidor, usuario)
       "4" ->
+        ejecutar(servidor, PokemonBattle.GestorEntrenadores, :inventario, [usuario])
+        menu_usuario(servidor, usuario)
+      "5" ->
         nombre = IO.gets("Nombre del equipo: ") |> String.trim()
         ids_str = IO.gets("IDs de Pokémon separados por espacio: ") |> String.trim()
         ids = ids_str |> String.split() |> Enum.map(fn id ->
@@ -112,19 +117,19 @@ defmodule PokemonBattle.CLI do
         end)
         ejecutar(servidor, PokemonBattle.GestorEntrenadores, :crear_equipo, [usuario, nombre, ids])
         menu_usuario(servidor, usuario)
-      "5" ->
+      "6" ->
         nombre = IO.gets("Nombre del equipo a usar: ") |> String.trim()
         ejecutar(servidor, PokemonBattle.GestorEntrenadores, :usar_equipo, [usuario, nombre])
         menu_usuario(servidor, usuario)
-      "6" ->
-        menu_batalla(servidor, usuario)
       "7" ->
-        menu_intercambio(servidor, usuario)
+        menu_batalla(servidor, usuario)
       "8" ->
+        menu_intercambio(servidor, usuario)
+      "9" ->
         IO.puts("Cerrando sesión...")
         menu_auth(servidor)
       _ ->
-        IO.puts("⚠️ Opción inválida.")
+        IO.puts("Opción inválida.")
         menu_usuario(servidor, usuario)
     end
   end
@@ -147,17 +152,17 @@ defmodule PokemonBattle.CLI do
   end
 
   defp menu_batalla_lobby(servidor, usuario) do
-    IO.puts "\n--- ⚔️  SALA DE ESPERA ---"
+    IO.puts "\n--- SALA DE ESPERA ---"
     IO.puts "1. Crear nueva sala"
     IO.puts "2. Unirse a una sala"
     IO.puts "3. Iniciar la batalla"
-    IO.puts "4. 🔙 Volver al campamento"
+    IO.puts "4. Volver al campamento"
 
     case IO.gets("Elige: ") |> String.trim() do
       "1" ->
         case ejecutar(servidor, PokemonBattle.GestorSalas, :crear_sala, [usuario]) do
           {:ok, id_sala} ->
-            IO.puts("\n✅ Sala #{id_sala} creada. Esperando a que tu rival se una...")
+            IO.puts("\nSala #{id_sala} creada. Esperando a que tu rival se una...")
             esperar_inicio_batalla(servidor, usuario)
           _ ->
             menu_batalla_lobby(servidor, usuario)
@@ -166,7 +171,7 @@ defmodule PokemonBattle.CLI do
         codigo = IO.gets("Código de la sala: ") |> String.trim()
         case ejecutar(servidor, PokemonBattle.GestorSalas, :unirse_sala, [usuario, codigo]) do
           :ok ->
-            IO.puts("\n✅ Te has unido a la sala #{codigo}. Esperando a que el anfitrión inicie...")
+            IO.puts("\nTe has unido a la sala #{codigo}. Esperando a que el anfitrión inicie...")
             esperar_inicio_batalla(servidor, usuario)
           _ ->
             menu_batalla_lobby(servidor, usuario)
@@ -175,7 +180,7 @@ defmodule PokemonBattle.CLI do
         codigo = IO.gets("Código de la sala: ") |> String.trim()
         case ejecutar(servidor, PokemonBattle.GestorSalas, :iniciar_batalla, [codigo, usuario]) do
           {:ok, _pid} ->
-            IO.puts("\n🔥 ¡BATALLA INICIADA!")
+            IO.puts("\nBATALLA INICIADA!")
             loop_batalla(servidor, usuario, 0)
           _ ->
             menu_batalla_lobby(servidor, usuario)
@@ -183,7 +188,7 @@ defmodule PokemonBattle.CLI do
       "4" ->
         menu_usuario(servidor, usuario)
       _ ->
-        IO.puts("⚠️ Opción inválida.")
+        IO.puts("Opción inválida.")
         menu_batalla_lobby(servidor, usuario)
     end
   end
@@ -193,7 +198,7 @@ defmodule PokemonBattle.CLI do
   defp esperar_inicio_batalla(servidor, usuario) do
     case ejecutar(servidor, PokemonBattle.GestorSalas, :estado_batalla, [usuario]) do
       {:ok, estado} ->
-        IO.puts("\n🔥 ¡BATALLA INICIADA! Entrando al combate...")
+        IO.puts("\nBATALLA INICIADA! Entrando al combate...")
         loop_batalla(servidor, usuario, estado.turno - 1)
       {:terminada, _} ->
         IO.puts("\nLa batalla ya terminó.")
@@ -206,12 +211,12 @@ defmodule PokemonBattle.CLI do
         hay_dos? = sala != nil and length(sala.jugadores) >= 2
 
         if es_creador? and hay_dos? do
-          IO.puts("\n✅ Tu rival ya se unió. Escribe 'iniciar' para empezar la batalla:")
+          IO.puts("\nTu rival ya se unió. Escribe 'iniciar' para empezar la batalla:")
           entrada = IO.gets("") |> String.trim() |> String.downcase()
           if entrada == "iniciar" do
             case ejecutar(servidor, PokemonBattle.GestorSalas, :iniciar_batalla, [id_sala, usuario]) do
               {:ok, _pid} ->
-                IO.puts("\n🔥 ¡BATALLA INICIADA!")
+                IO.puts("\nBATALLA INICIADA!")
                 Process.sleep(500)
                 loop_batalla(servidor, usuario, 0)
               _ ->
@@ -221,7 +226,7 @@ defmodule PokemonBattle.CLI do
             esperar_inicio_batalla(servidor, usuario)
           end
         else
-          estado_msg = if es_creador?, do: "⏳ Esperando a tu rival...", else: "⏳ Esperando que el anfitrión inicie..."
+          estado_msg = if es_creador?, do: "Esperando a tu rival...", else: "Esperando que el anfitrión inicie..."
           IO.write("#{estado_msg}\r")
           Process.sleep(2000)
           esperar_inicio_batalla(servidor, usuario)
@@ -247,11 +252,11 @@ defmodule PokemonBattle.CLI do
         end
       {:terminada, _} ->
         IO.puts("\n════════════════════════════════════")
-        IO.puts(" 🏁 La batalla ha terminado.")
+        IO.puts(" La batalla ha terminado.")
         IO.puts("════════════════════════════════════")
         menu_usuario(servidor, usuario)
       _ ->
-        IO.puts("\n🏁 La batalla ha concluido.")
+        IO.puts("\nLa batalla ha concluido.")
         menu_usuario(servidor, usuario)
     end
   end
@@ -274,10 +279,10 @@ defmodule PokemonBattle.CLI do
       rival_vivos = Enum.count(rival_equipo, &(&1.salud > 0))
 
       IO.puts "\n════════════════════════════════════════════"
-      IO.puts " ⚔️  TURNO #{estado.turno}"
+      IO.puts " TURNO #{estado.turno}"
       IO.puts "════════════════════════════════════════════"
-      IO.puts " 🔵 Tu Pokémon: #{String.capitalize(mi_pokemon.especie)} | ❤️  #{mi_pokemon.salud}/100 | Equipo vivo: #{mis_vivos}"
-      IO.puts " 🔴 Rival (#{rival}): #{String.capitalize(rival_pokemon.especie)} | ❤️  #{rival_pokemon.salud}/100 | Equipo vivo: #{rival_vivos}"
+      IO.puts " Tu Pokémon: #{String.capitalize(mi_pokemon.especie)} | #{mi_pokemon.salud}/100 | Equipo vivo: #{mis_vivos}"
+      IO.puts " Rival (#{rival}): #{String.capitalize(rival_pokemon.especie)} | #{rival_pokemon.salud}/100 | Equipo vivo: #{rival_vivos}"
       IO.puts "════════════════════════════════════════════"
     end
 
@@ -285,7 +290,7 @@ defmodule PokemonBattle.CLI do
 
     if ya_ataque? do
       # Polling: esperar al rival
-      IO.write("⏳ Esperando al rival... (Turno #{estado.turno})\r")
+      IO.write("Esperando al rival... (Turno #{estado.turno})\r")
       Process.sleep(1500)
       loop_batalla(servidor, usuario, turno_anterior)
     else
@@ -296,13 +301,13 @@ defmodule PokemonBattle.CLI do
         IO.puts("  #{idx}. #{String.capitalize(mov.nombre)} (Poder: #{mov.poder_base}, Tipo: #{mov.tipo})")
       end)
       idx_rendirse = length(movimientos) + 1
-      IO.puts("  #{idx_rendirse}. 🏳️  Rendirse")
+      IO.puts("  #{idx_rendirse}. Rendirse")
 
       entrada = IO.gets("\nElige (1-#{idx_rendirse}): ") |> String.trim()
 
       case Integer.parse(entrada) do
         {^idx_rendirse, _} ->
-          IO.puts("🏳️  Te has rendido...")
+          IO.puts("Te has rendido...")
           ejecutar(servidor, PokemonBattle.GestorSalas, :enviar_accion, [usuario, :rendirse])
           # La batalla terminará inmediatamente, consultamos resultado
           Process.sleep(500)
@@ -310,14 +315,14 @@ defmodule PokemonBattle.CLI do
 
         {num, _} when num >= 1 and num <= length(movimientos) ->
           mov_elegido = Enum.at(movimientos, num - 1)
-          IO.puts("✅ #{String.capitalize(mov_elegido.nombre)} seleccionado.")
+          IO.puts("#{String.capitalize(mov_elegido.nombre)} seleccionado.")
           ejecutar(servidor, PokemonBattle.GestorSalas, :enviar_accion, [usuario, {:ataque, mov_elegido.nombre}])
           # Esperar al rival o pasar al siguiente turno
           Process.sleep(500)
           loop_batalla(servidor, usuario, estado.turno)
 
         _ ->
-          IO.puts("⚠️ Opción inválida.")
+          IO.puts("Opción inválida.")
           procesar_turno(servidor, usuario, estado, turno_anterior)
       end
     end
@@ -340,37 +345,205 @@ defmodule PokemonBattle.CLI do
   # INTERCAMBIOS
   # ═══════════════════════════════════════════════════════════════════════════════
 
+  # Punto de entrada: si ya estás en una sala activa, entras directo; si no, lobby.
   defp menu_intercambio(servidor, usuario) do
-    IO.puts "\n--- 🤝 CENTRO DE INTERCAMBIOS ---"
-    IO.puts "1. Crear sala de intercambio"
-    IO.puts "2. Unirse a una sala"
-    IO.puts "3. Ofrecer un Pokémon"
-    IO.puts "4. Confirmar intercambio"
-    IO.puts "5. 🔙 Volver al campamento"
+    case ejecutar(servidor, PokemonBattle.Intercambio, :estado_sala, [usuario]) do
+      {:ok, estado_sala} ->
+        # Ya estamos en una sala activa con dos jugadores
+        sala_intercambio_activa(servidor, usuario, estado_sala)
 
-    case IO.gets("Elige: ") |> String.trim() do
-      "1" ->
-        ejecutar(servidor, PokemonBattle.Intercambio, :crear_sala, [usuario])
-        menu_intercambio(servidor, usuario)
-      "2" ->
-        codigo = IO.gets("Código de sala: ") |> String.trim()
-        ejecutar(servidor, PokemonBattle.Intercambio, :unirse_sala, [usuario, codigo])
-        menu_intercambio(servidor, usuario)
-      "3" ->
-        id_str = IO.gets("ID del Pokémon a ofrecer: ") |> String.trim()
-        case Integer.parse(id_str) do
-          {id, _} -> ejecutar(servidor, PokemonBattle.Intercambio, :ofrecer_pokemon, [usuario, id])
-          :error -> ejecutar(servidor, PokemonBattle.Intercambio, :ofrecer_pokemon, [usuario, id_str])
-        end
-        menu_intercambio(servidor, usuario)
-      "4" ->
-        ejecutar(servidor, PokemonBattle.Intercambio, :confirmar_intercambio, [usuario])
-        menu_intercambio(servidor, usuario)
-      "5" ->
-        menu_usuario(servidor, usuario)
+      {:esperando, codigo} ->
+        # Sala creada pero sin rival todavía
+        IO.puts("\nSala #{codigo} esperando rival...")
+        esperar_rival_intercambio(servidor, usuario, codigo)
+
       _ ->
-        IO.puts("⚠️ Opción inválida.")
-        menu_intercambio(servidor, usuario)
+        # Sin sala: mostrar lobby
+        menu_intercambio_lobby(servidor, usuario)
     end
   end
+
+  # ─── Lobby de intercambio ────────────────────────────────────────────────────
+
+  defp menu_intercambio_lobby(servidor, usuario) do
+    IO.puts "\n╔══════════════════════════════════════╗"
+    IO.puts " 🤝  CENTRO DE INTERCAMBIOS"
+    IO.puts "╚══════════════════════════════════════╝"
+    IO.puts "1. Crear sala de intercambio"
+    IO.puts "2. Unirse a una sala existente"
+    IO.puts "3. 🔙 Volver al campamento"
+
+    case IO.gets("\nElige: ") |> String.trim() do
+      "1" ->
+        case ejecutar(servidor, PokemonBattle.Intercambio, :crear_sala, [usuario]) do
+          {:ok, codigo} ->
+            IO.puts("\n[Sala #{codigo} creada] Comparte este código con tu rival.")
+            esperar_rival_intercambio(servidor, usuario, codigo)
+          _ ->
+            IO.puts("⚠️  No se pudo crear la sala.")
+            menu_intercambio_lobby(servidor, usuario)
+        end
+
+      "2" ->
+        codigo = IO.gets("Código de sala: ") |> String.trim()
+        case ejecutar(servidor, PokemonBattle.Intercambio, :unirse_sala, [usuario, codigo]) do
+          :ok ->
+            IO.puts("\n✅ Te uniste a la sala #{codigo}.")
+            # Consultar el estado actual y entrar a la sala activa
+            case ejecutar(servidor, PokemonBattle.Intercambio, :estado_sala, [usuario]) do
+              {:ok, estado_sala} -> sala_intercambio_activa(servidor, usuario, estado_sala)
+              _                  -> menu_intercambio_lobby(servidor, usuario)
+            end
+          _ ->
+            menu_intercambio_lobby(servidor, usuario)
+        end
+
+      "3" ->
+        menu_usuario(servidor, usuario)
+
+      _ ->
+        IO.puts("⚠️  Opción inválida.")
+        menu_intercambio_lobby(servidor, usuario)
+    end
+  end
+
+  # ─── Esperar a que el rival se una ──────────────────────────────────────────
+
+  defp esperar_rival_intercambio(servidor, usuario, codigo) do
+    case ejecutar(servidor, PokemonBattle.Intercambio, :estado_sala, [usuario]) do
+      {:ok, estado_sala} ->
+        IO.puts("\n✅ ¡#{estado_sala.invitado} se unió a la sala #{codigo}!")
+        sala_intercambio_activa(servidor, usuario, estado_sala)
+
+      {:esperando, _} ->
+        IO.write("Esperando rival en sala #{codigo}... (60s para expirar)\r")
+        Process.sleep(2000)
+        esperar_rival_intercambio(servidor, usuario, codigo)
+
+      _ ->
+        IO.puts("\n⌛ La sala #{codigo} expiró sin que nadie se uniera.")
+        menu_intercambio_lobby(servidor, usuario)
+    end
+  end
+
+  # ─── Sala activa: ofrecer, confirmar, cancelar ──────────────────────────────
+
+  defp sala_intercambio_activa(servidor, usuario, estado_sala) do
+    # Primero verificar si la sala sigue viva
+    case ejecutar(servidor, PokemonBattle.Intercambio, :estado_sala, [usuario]) do
+      {:completado, mensaje} ->
+        IO.puts("\n#{mensaje}")
+        menu_usuario(servidor, usuario)
+
+      {:cancelado, mensaje} ->
+        IO.puts("\n#{mensaje}")
+        menu_usuario(servidor, usuario)
+
+      {:error, _} ->
+        IO.puts("\n⚠️  La sala ya no está disponible.")
+        menu_usuario(servidor, usuario)
+
+      {:ok, estado_actual} ->
+        rival = if estado_actual.creador == usuario, do: estado_actual.invitado, else: estado_actual.creador
+        mi_oferta    = Map.get(estado_actual.oferta, usuario)
+        rival_oferta = Map.get(estado_actual.oferta, rival)
+        yo_confirme  = MapSet.member?(estado_actual.confirmado, usuario)
+
+        IO.puts "\n╔══════════════════════════════════════╗"
+        IO.puts " 🤝  SALA DE INTERCAMBIO #{estado_actual.codigo}"
+        IO.puts "╚══════════════════════════════════════╝"
+        IO.puts " Tu oferta  : #{formatear_oferta(mi_oferta)}"
+        IO.puts " Rival (#{rival}): #{formatear_oferta(rival_oferta)}"
+        IO.puts " Tu confirmación: #{if yo_confirme, do: "✅ Confirmado", else: "⏳ Pendiente"}"
+        IO.puts "────────────────────────────────────────"
+        IO.puts "1. Ofrecer un Pokémon"
+        IO.puts "2. Confirmar intercambio"
+        IO.puts "3. Cancelar y salir"
+
+        case IO.gets("\nElige: ") |> String.trim() do
+          "1" ->
+            id_str = IO.gets("ID del Pokémon a ofrecer: ") |> String.trim()
+            id = case Integer.parse(id_str) do
+              {num, _} -> num
+              :error   -> id_str
+            end
+            case ejecutar(servidor, PokemonBattle.Intercambio, :ofrecer_pokemon, [usuario, id]) do
+              :ok    -> IO.puts(" Oferta registrada.")
+              :error -> IO.puts("  No se pudo registrar la oferta.")
+              _      -> :ok
+            end
+            # Polling breve: dar tiempo al rival a ver la oferta y refrescar estado
+            refrescar_sala_intercambio(servidor, usuario)
+
+          "2" ->
+            case ejecutar(servidor, PokemonBattle.Intercambio, :confirmar_intercambio, [usuario]) do
+              :ok ->
+                IO.puts(" Confirmación enviada. Esperando al rival...")
+                esperar_confirmacion_rival(servidor, usuario)
+              {:completado, _} ->
+                IO.puts("\n ¡Intercambio completado!")
+                menu_usuario(servidor, usuario)
+              _ ->
+                IO.puts("  No se pudo confirmar.")
+                sala_intercambio_activa(servidor, usuario, estado_actual)
+            end
+
+          "3" ->
+            ejecutar(servidor, PokemonBattle.Intercambio, :cancelar_intercambio, [usuario])
+            IO.puts(" Intercambio cancelado.")
+            menu_usuario(servidor, usuario)
+
+          _ ->
+            IO.puts("  Opción inválida.")
+            sala_intercambio_activa(servidor, usuario, estado_actual)
+        end
+
+      _ ->
+        menu_usuario(servidor, usuario)
+    end
+  end
+
+  # ─── Polling tras confirmar: esperar que el rival también confirme ───────────
+
+  defp esperar_confirmacion_rival(servidor, usuario) do
+    case ejecutar(servidor, PokemonBattle.Intercambio, :estado_sala, [usuario]) do
+      {:completado, mensaje} ->
+        IO.puts("\n#{mensaje}")
+        menu_usuario(servidor, usuario)
+
+      {:ok, estado_actual} ->
+        rival = if estado_actual.creador == usuario, do: estado_actual.invitado, else: estado_actual.creador
+        rival_confirmo = MapSet.member?(estado_actual.confirmado, rival)
+
+        if rival_confirmo do
+          # Ambos confirmaron — el intercambio debió ejecutarse; recargar
+          esperar_confirmacion_rival(servidor, usuario)
+        else
+          IO.write("Esperando que #{rival} confirme...\r")
+          Process.sleep(1500)
+          esperar_confirmacion_rival(servidor, usuario)
+        end
+
+      {:cancelado, mensaje} ->
+        IO.puts("\n#{mensaje}")
+        menu_usuario(servidor, usuario)
+
+      _ ->
+        IO.puts("\n  La sala cerró inesperadamente.")
+        menu_usuario(servidor, usuario)
+    end
+  end
+
+  # ─── Refrescar estado de sala tras ofrecer ──────────────────────────────────
+
+  defp refrescar_sala_intercambio(servidor, usuario) do
+    case ejecutar(servidor, PokemonBattle.Intercambio, :estado_sala, [usuario]) do
+      {:ok, estado_sala}      -> sala_intercambio_activa(servidor, usuario, estado_sala)
+      {:completado, mensaje}  -> IO.puts("\n#{mensaje}"); menu_usuario(servidor, usuario)
+      _                       -> menu_usuario(servidor, usuario)
+    end
+  end
+
+  defp formatear_oferta(nil), do: "sin ofrecer"
+  defp formatear_oferta(id),  do: "Pokémon ##{id}"
 end
